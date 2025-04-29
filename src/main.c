@@ -95,6 +95,15 @@ int main()
     char bd[1024];
     char pref[] = "/echo/";
     int bd_len = strlen(path) - strlen(pref);
+    if (strcmp(path, "/") == 0) {
+        char index[] = 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/plain\r\n"
+            "Content-Length: 1\r\n"
+            "\r\n"
+            "/";
+        send(client_fd, index, strlen(index), 0);
+    }
     if (bd_len < 0) {
         send(client_fd, res_b, strlen(res_b), 0);
     } else {
