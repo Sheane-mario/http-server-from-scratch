@@ -62,14 +62,15 @@ int main()
 	int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 	printf("Client connected\n");
 
-    // Good response
-    char res_buf[] = 
+    // Good response template
+    char res_temp[] = 
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/plain\r\n"
-        "Content-Length: 12\r\n"
+        "Content-Length: %d\r\n"
         "\r\n"
-        "Heelo Broooo";
-    char res_buf_b[] = 
+        "%s";
+    // Bad response
+    char res_b[] = 
         "HTTP/1.1 404 Not Found\r\n"
         "Content-Type: text/plain\r\n"
         "Content-Length: 9\r\n"
@@ -81,6 +82,7 @@ int main()
     // receive the request from the client
     recv(client_fd, req_buf, sizeof(req_buf), 0);
 
+    // print the clint request
     printf("-----HTTP REQUEST-----\n");
     printf("%s \n", req_buf);
     printf("\n----------------------\n");
@@ -89,17 +91,27 @@ int main()
     char method[16], path[1024];
 
     sscanf(req_buf, "%s %s", method, path);
-    printf("%s", method);
-    printf("%s", path);
 
-    if (strcmp(path, "/") == 0 && strcmp(method, "GET") == 0) {
+    char bd[1024];
+    char pref[] = "/echo/";
+    int bd_len = strlen(path) - strlen(pref);
+    // strncpy copy or extract a substring and store the result in a different char array 
+    strncpy(bd, path + strlen(pref), bd_len);
+
+//    if (strcmp(path, "/") == 0 && strcmp(method, "GET") == 0) {
         // send the response to the client
-        send(client_fd, res_buf, strlen(res_buf), 0);
-    } else {
-        send(client_fd, res_buf_b, strlen(res_buf_b), 0);
-    }
+//        send(client_fd, res_buf, strlen(res_buf), 0);
+//    } else {
+//        send(client_fd, res_buf_b, strlen(res_buf_b), 0);
+//    }
 
+    char res_buf[4096];
+    // snprintf() can insert data into the format specifiers like (%s %d) in a template and store the final result in char array 
+    snprintf(res_buf, sizeof(res_buf), res_temp, strlen(bd), bd);
 
+    send(client_fd, res_buf, strlen(res_buf), 0);
+
+    // close the connection
 	close(server_fd);
 
 	return 0;
