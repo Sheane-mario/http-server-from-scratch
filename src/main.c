@@ -92,9 +92,9 @@ int main()
 
     sscanf(req_buf, "%s %s", method, path);
 
-    char bd[1024];
-    char pref[] = "/echo/";
-    int bd_len = strlen(path) - strlen(pref);
+    char body[1024];
+    char endpoint[] = "/user-agent";
+    char header[] = "User-Agent: ";
     if (strcmp(path, "/") == 0) {
         char index[] = 
             "HTTP/1.1 200 OK\r\n"
@@ -104,33 +104,45 @@ int main()
             "/";
         send(client_fd, index, strlen(index), 0);
     }
-    if (bd_len < 0) {
+
+    if (strcmp(path, endpoint) != 0) {
         send(client_fd, res_b, strlen(res_b), 0);
     } else {
-        // strncpy copy or extract a substring and store the result in a different char array 
-        strncpy(bd, path + strlen(pref), bd_len);
+        char *line = strtok(req_buf, "\r\n");
+        while (line != NULL) {
+            char header_type[256];
+            char header_content[1024];
+            char res_buf[4096];
+            strncpy(header_type, line, strlen(header));
+            if (strcmp(header_type, header) == 0) {
+                strncpy(header_content, line + strlen(header), strlen(line) - strlen(header_type));
+                snprintf(res_buf, sizeof(res_buf), res_temp, strlen(header_content), header_content);
+                send(client_fd, res_buf, strlen(res_buf), 0);
+            }
+            line = strtok(NULL, "\r\n");
+        }
     }
 
-//    if (strcmp(path, "/") == 0 && strcmp(method, "GET") == 0) {
-        // send the response to the client
-//        send(client_fd, res_buf, strlen(res_buf), 0);
+
+
+//    if (bd_len < 0) {
+//        send(client_fd, res_b, strlen(res_b), 0);
 //    } else {
-//        send(client_fd, res_buf_b, strlen(res_buf_b), 0);
+        // strncpy copy or extract a substring and store the result in a different char array 
+//        strncpy(bd, path + strlen(pref), bd_len);
 //    }
 
-    char res_buf[4096];
+//    char res_buf[4096];
     // snprintf() can insert data into the format specifiers like (%s %d) in a template and store the final result in char array 
-    snprintf(res_buf, sizeof(res_buf), res_temp, strlen(bd), bd);
+//    snprintf(res_buf, sizeof(res_buf), res_temp, strlen(bd), bd);
 
-    char path_pref[1024];
+//    char path_pref[1024];
 
-    if (strlen(path) < strlen(pref)) {
-        send(client_fd, res_b, strlen(res_b), 0);
-    } else if (strcmp(strncpy(path_pref, path, strlen(pref)), pref) != 0) {
-        send(client_fd, res_b, strlen(res_b), 0);
-    } else {
-        send(client_fd, res_buf, strlen(res_buf), 0);
-    }
+//    if (strcmp(strncpy(path_pref, path, strlen(pref)), pref) != 0) {
+//        send(client_fd, res_b, strlen(res_b), 0);
+//    } else {
+//        send(client_fd, res_buf, strlen(res_buf), 0);
+//    }
 
     // close the connection
 	close(server_fd);
