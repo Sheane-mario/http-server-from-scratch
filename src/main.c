@@ -62,15 +62,43 @@ int main()
 	int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 	printf("Client connected\n");
 
-    char buffer[] = 
+    // Good response
+    char res_buf[] = 
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/plain\r\n"
         "Content-Length: 12\r\n"
         "\r\n"
         "Heelo Broooo";
+    char res_buf_b[] = 
+        "HTTP/1.1 404 NOT FOUND\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: 9\r\n"
+        "\r\n"
+        "Not Found";
 
-//    write(client_fd, res, strlen(res));
-    send(client_fd, buffer, strlen(buffer), 0);
+    // place to store the client request
+    char req_buf[4096]; 
+    // receive the request from the client
+    recv(client_fd, req_buf, sizeof(req_buf), 0);
+
+    printf("-----HTTP REQUEST-----\n");
+    printf("%s \n", req_buf);
+    printf("\n----------------------\n");
+
+    // arrays to store the http method and url path
+    char method[16], path[1024];
+
+    sscanf(req_buf, "%s %s", method, path);
+    printf("%s", method);
+    printf("%s", path);
+
+    if (strcmp(path, "/") == 0 && strcmp(method, "GET") == 0) {
+        // send the response to the client
+        send(client_fd, res_buf, strlen(res_buf), 0);
+    } else {
+        send(client_fd, res_buf_b, strlen(res_buf_b), 0);
+    }
+
 
 	close(server_fd);
 
