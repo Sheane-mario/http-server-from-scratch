@@ -95,8 +95,12 @@ int main()
     char bd[1024];
     char pref[] = "/echo/";
     int bd_len = strlen(path) - strlen(pref);
-    // strncpy copy or extract a substring and store the result in a different char array 
-    strncpy(bd, path + strlen(pref), bd_len);
+    if (bd_len < 0) {
+        send(client_fd, res_b, strlen(res_b), 0);
+    } else {
+        // strncpy copy or extract a substring and store the result in a different char array 
+        strncpy(bd, path + strlen(pref), bd_len);
+    }
 
 //    if (strcmp(path, "/") == 0 && strcmp(method, "GET") == 0) {
         // send the response to the client
@@ -109,7 +113,15 @@ int main()
     // snprintf() can insert data into the format specifiers like (%s %d) in a template and store the final result in char array 
     snprintf(res_buf, sizeof(res_buf), res_temp, strlen(bd), bd);
 
-    send(client_fd, res_buf, strlen(res_buf), 0);
+    char path_pref[1024];
+
+    if (strlen(path) < strlen(pref)) {
+        send(client_fd, res_b, strlen(res_b), 0);
+    } else if (strcmp(strncpy(path_pref, path, strlen(pref)), pref) != 0) {
+        send(client_fd, res_b, strlen(res_b), 0);
+    } else {
+        send(client_fd, res_buf, strlen(res_buf), 0);
+    }
 
     // close the connection
 	close(server_fd);
