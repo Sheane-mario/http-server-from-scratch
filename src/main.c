@@ -171,7 +171,7 @@ void handle_client(int client_fd) {
 //            printf("%s %ld\n", pcmprs, strlen(pcmprs));
             if (pcmprs != NULL) {
                 char *cmpr = strtok(pcmprs, ", ");
-                if (strcmp(cmpr, "gzip\r\n") == 0) {
+                if (strcmp(cmpr, "gzip\r\n\r\n") == 0) {
                     char res_enc[] = 
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Type: text/plain\r\n"
