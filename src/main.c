@@ -180,6 +180,9 @@ void handle_client(int client_fd) {
                 //snprintf(resp, sizeof(resp), res_temp_enc_hdr, strlen(req_fl_buf), req_fl_buf);
                 send(client_fd, res_temp_enc_hdr, strlen(res_temp_enc_hdr), 0);
             }
+            char res[4096];
+            snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
+            send(client_fd, res, strlen(res), 0);
         }
         close(client_fd);
 }
