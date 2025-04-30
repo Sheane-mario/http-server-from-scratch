@@ -92,8 +92,8 @@ void handle_client(int client_fd) {
             char req_file[2048];
             strncpy(req_file, path + strlen(endpoint_files), strlen(path) - strlen(endpoint_files));
             // construct full file path directory/file_path
-            char file_path[2048];
-            snprinf(file_path, sizeof(file_path), "%s/%s", directory, req_file);
+            char file_path[4096];
+            snprintf(file_path, sizeof(file_path), "%s/%s", directory, req_file);
 
             FILE *fp = fopen(file_path, "rb");
             if (fp == NULL) {
