@@ -164,21 +164,26 @@ void handle_client(int client_fd) {
             strncpy(req_fl_buf, path + strlen(endpoint_echo), strlen(path) - strlen(endpoint_echo));
             // Prepare the response by inserting into the res template
             char *pcmprs = strstr(req_buf, "Accept-Encoding: ");
-            pcmprs += 17;
-            printf("%s %ld\n", pcmprs, strlen(pcmprs));
-            if (strcmp(pcmprs, "invalid-encoding\r\n\r\n") == 0) {
-                char res[4096]; 
-                snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
-                send(client_fd, res, strlen(res), 0);
-            } else if (strcmp(pcmprs, "gzip\r\n\r\n") == 0) {
-                char resp[4096];
-                char res_temp_enc_hdr[] = 
-                    "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: text/plain\r\n"
-                    "Content-Encoding: gzip\r\n"
-                    "\r\n";
-                //snprintf(resp, sizeof(resp), res_temp_enc_hdr, strlen(req_fl_buf), req_fl_buf);
-                send(client_fd, res_temp_enc_hdr, strlen(res_temp_enc_hdr), 0);
+            if (pcmprs != NULL) {
+                pcmprs += 17;
+            }
+            printf("%s\n", req_fl_buf);
+//            printf("%s %ld\n", pcmprs, strlen(pcmprs));
+            if (pcmprs != NULL) {
+                if (strcmp(pcmprs, "invalid-encoding\r\n\r\n") == 0) {
+                    char res[4096]; 
+                    snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
+                    send(client_fd, res, strlen(res), 0);
+                } else if (strcmp(pcmprs, "gzip\r\n\r\n") == 0) {
+                    char resp[4096];
+                    char res_temp_enc_hdr[] = 
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "Content-Encoding: gzip\r\n"
+                        "\r\n";
+                    //snprintf(resp, sizeof(resp), res_temp_enc_hdr, strlen(req_fl_buf), req_fl_buf);
+                    send(client_fd, res_temp_enc_hdr, strlen(res_temp_enc_hdr), 0);
+                }
             }
             char res[4096];
             snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
