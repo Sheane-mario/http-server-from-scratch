@@ -6,6 +6,102 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+
+
+void handle_client(int client_fd) {
+        // Good response template
+        char res_temp[] = 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/plain\r\n"
+            "Content-Length: %d\r\n"
+            "\r\n"
+            "%s";
+        // Bad response
+        char res_b[] = 
+            "HTTP/1.1 404 Not Found\r\n"
+            "Content-Type: text/plain\r\n"
+            "Content-Length: 9\r\n"
+            "\r\n"
+            "Not Found";
+
+        // place to store the client request
+        char req_buf[4096]; 
+        // receive the request from the client
+        recv(client_fd, req_buf, sizeof(req_buf), 0);
+
+        // print the clint request
+        printf("-----HTTP REQUEST-----\n");
+        printf("%s \n", req_buf);
+        printf("\n----------------------\n");
+
+        // arrays to store the http method and url path
+        char method[16], path[1024];
+
+        sscanf(req_buf, "%s %s", method, path);
+
+        char body[1024];
+
+        // Endpoints
+        char endpoint[] = "/user-agent";
+        char endpoint_echo[] = "/echo/";
+        // End of endpoints
+
+        // Request headers
+        char header[] = "User-Agent: ";
+        // End of request headers
+
+        // Accept from / endpoint and send status OK
+        if (strcmp(path, "/") == 0) {
+            char index[] = 
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: text/plain\r\n"
+                "Content-Length: 1\r\n"
+                "\r\n"
+                "/";
+            send(client_fd, index, strlen(index), 0);
+        }
+
+        // if the request path is /user-agent
+        if (strcmp(path, endpoint) == 0 ) {
+            char *line = strtok(req_buf, "\r\n");
+            while (line != NULL) {
+                char header_type[256];
+                char header_content[1024];
+                char res_buf[4096];
+                strncpy(header_type, line, strlen(header));
+                if (strcmp(header_type, header) == 0) {
+                    strncpy(header_content, line + strlen(header), strlen(line) - strlen(header_type));
+                    snprintf(res_buf, sizeof(res_buf), res_temp, strlen(header_content), header_content);
+                    send(client_fd, res_buf, strlen(res_buf), 0);
+                }
+                line = strtok(NULL, "\r\n");
+            }
+        }
+
+        // if path length is < /echo/ endpoint
+        if (strlen(path) - strlen(endpoint_echo) < 0) {
+           send(client_fd, res_b, strlen(res_b), 0);
+        }
+        
+        // drop endpoints not from /echo/
+        char req_endpt[20];
+        // extract prefix of requested endpoint to check whether it mathes /echo/
+        strncpy(req_endpt, path, strlen(endpoint_echo));
+        if (strcmp(req_endpt, endpoint_echo) != 0) {
+            send(client_fd, res_b, strlen(res_b), 0);
+        } else {
+            // To store client requesting file; like /echo/index.php
+            char req_fl_buf[2048];
+            strncpy(req_fl_buf, path + strlen(endpoint_echo), strlen(path) - strlen(endpoint_echo));
+            // Prepare the response by inserting into the res template
+            char res[4096]; 
+            snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
+            send(client_fd, res, strlen(res), 0);
+        }
+        close(client_fd);
+}
+
 
 int main()
 {
@@ -59,97 +155,24 @@ int main()
 	printf("Waiting for a client to connect...\n");
 	client_addr_len = sizeof(client_addr);
 
-	int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
-	printf("Client connected\n");
+    while (1) {
+        int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+        printf("Client connected\n");
 
-    // Good response template
-    char res_temp[] = 
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: %d\r\n"
-        "\r\n"
-        "%s";
-    // Bad response
-    char res_b[] = 
-        "HTTP/1.1 404 Not Found\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: 9\r\n"
-        "\r\n"
-        "Not Found";
-
-    // place to store the client request
-    char req_buf[4096]; 
-    // receive the request from the client
-    recv(client_fd, req_buf, sizeof(req_buf), 0);
-
-    // print the clint request
-    printf("-----HTTP REQUEST-----\n");
-    printf("%s \n", req_buf);
-    printf("\n----------------------\n");
-
-    // arrays to store the http method and url path
-    char method[16], path[1024];
-
-    sscanf(req_buf, "%s %s", method, path);
-
-    char body[1024];
-
-    // Endpoints
-    char endpoint[] = "/user-agent";
-    char endpoint_echo[] = "/echo/";
-    // End of endpoints
-
-    // Request headers
-    char header[] = "User-Agent: ";
-    // End of request headers
-
-    // Accept from / endpoint and send status OK
-    if (strcmp(path, "/") == 0) {
-        char index[] = 
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/plain\r\n"
-            "Content-Length: 1\r\n"
-            "\r\n"
-            "/";
-        send(client_fd, index, strlen(index), 0);
-    }
-
-    // if the request path is /user-agent
-    if (strcmp(path, endpoint) == 0 ) {
-        char *line = strtok(req_buf, "\r\n");
-        while (line != NULL) {
-            char header_type[256];
-            char header_content[1024];
-            char res_buf[4096];
-            strncpy(header_type, line, strlen(header));
-            if (strcmp(header_type, header) == 0) {
-                strncpy(header_content, line + strlen(header), strlen(line) - strlen(header_type));
-                snprintf(res_buf, sizeof(res_buf), res_temp, strlen(header_content), header_content);
-                send(client_fd, res_buf, strlen(res_buf), 0);
-            }
-            line = strtok(NULL, "\r\n");
+        pid_t pid = fork();
+        // child process
+        if (pid == 0) {
+            close(server_fd);
+            handle_client(client_fd);
+            exit(0);
+        } else if (pid > 0) {
+            // parent process
+            close(client_fd);
+        } else {
+            printf("fork failed: %s \n", strerror(errno));
+            close(client_fd);
         }
-    }
 
-    // if path length is < /echo/ endpoint
-    if (strlen(path) - strlen(endpoint_echo) < 0) {
-       send(client_fd, res_b, strlen(res_b), 0);
-    }
-    
-    // drop endpoints not from /echo/
-    char req_endpt[20];
-    // extract prefix of requested endpoint to check whether it mathes /echo/
-    strncpy(req_endpt, path, strlen(endpoint_echo));
-    if (strcmp(req_endpt, endpoint_echo) != 0) {
-        send(client_fd, res_b, strlen(res_b), 0);
-    } else {
-        // To store client requesting file; like /echo/index.php
-        char req_fl_buf[2048];
-        strncpy(req_fl_buf, path + strlen(endpoint_echo), strlen(path) - strlen(endpoint_echo));
-        // Prepare the response
-        char res[4096]; 
-        snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
-        send(client_fd, res, strlen(res), 0);
     }
 
 
