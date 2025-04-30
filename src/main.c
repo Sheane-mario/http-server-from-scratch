@@ -93,8 +93,17 @@ int main()
     sscanf(req_buf, "%s %s", method, path);
 
     char body[1024];
+
+    // Endpoints
     char endpoint[] = "/user-agent";
+    char endpoint_echo[] = "/echo/";
+    // End of endpoints
+
+    // Request headers
     char header[] = "User-Agent: ";
+    // End of request headers
+
+    // Accept from / endpoint and send status OK
     if (strcmp(path, "/") == 0) {
         char index[] = 
             "HTTP/1.1 200 OK\r\n"
@@ -105,9 +114,8 @@ int main()
         send(client_fd, index, strlen(index), 0);
     }
 
-    if (strcmp(path, endpoint) != 0) {
-        send(client_fd, res_b, strlen(res_b), 0);
-    } else {
+    // if the request path is /user-agent
+    if (strcmp(path, endpoint) == 0 ) {
         char *line = strtok(req_buf, "\r\n");
         while (line != NULL) {
             char header_type[256];
@@ -123,6 +131,26 @@ int main()
         }
     }
 
+    // if path length is < /echo/ endpoint
+    if (strlen(path) - strlen(endpoint_echo) < 0) {
+       send(client_fd, res_b, strlen(res_b), 0);
+    }
+    
+    // drop endpoints not from /echo/
+    char req_endpt[20];
+    // extract prefix of requested endpoint to check whether it mathes /echo/
+    strncpy(req_endpt, path, strlen(endpoint_echo));
+    if (strcmp(req_endpt, endpoint_echo) != 0) {
+        send(client_fd, res_b, strlen(res_b), 0);
+    } else {
+        // To store client requesting file; like /echo/index.php
+        char req_fl_buf[2048];
+        strncpy(req_fl_buf, path + strlen(endpoint_echo), strlen(path) - strlen(endpoint_echo));
+        // Prepare the response
+        char res[4096]; 
+        snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
+        send(client_fd, res, strlen(res), 0);
+    }
 
 
 //    if (bd_len < 0) {
