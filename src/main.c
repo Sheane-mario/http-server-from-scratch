@@ -113,11 +113,12 @@ void handle_client(int client_fd) {
                 char res_temp_file[] = 
                     "HTTP/1.1 200 OK\r\n"
                     "Content-Type: application/octet-stream\r\n"
-                    "Content-Length: %d\r\n"
+                    "Content-Length: %ld\r\n"
                     "\r\n"
                     "%s";
                 char res_file[2048];
                 snprintf(res_file, sizeof(res_file), res_temp_file, fsize, file_buf);
+                send(client_fd, res_file, strlen(res_file), 0);
                 free(file_buf);
             }
         }
