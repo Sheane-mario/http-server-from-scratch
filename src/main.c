@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+char *directory = NULL;
 
 void handle_client(int client_fd) {
         // Good response template
@@ -45,6 +46,7 @@ void handle_client(int client_fd) {
         // Endpoints
         char endpoint[] = "/user-agent";
         char endpoint_echo[] = "/echo/";
+        char endpoint_files[] = "/files/";
         // End of endpoints
 
         // Request headers
@@ -83,6 +85,42 @@ void handle_client(int client_fd) {
         if (strlen(path) - strlen(endpoint_echo) < 0) {
            send(client_fd, res_b, strlen(res_b), 0);
         }
+
+        char file_req_endpt[20];
+        strncpy(file_req_endpt, path, strlen(endpoint_files));
+        if (strcmp(file_req_endpt, endpoint_files) == 0) {
+            char req_file[2048];
+            strncpy(req_file, path + strlen(endpoint_files), strlen(path) - strlen(endpoint_files));
+            // construct full file path directory/file_path
+            char file_path[2048];
+            snprinf(file_path, sizeof(file_path), "%s/%s", directory, req_file);
+
+            FILE *fp = fopen(file_path, "rb");
+            if (fp == NULL) {
+                send(client_fd, res_b, strlen(res_b), 0);
+            } else {
+                // get file size
+                fseek(fp, 0, SEEK_END);
+                long fsize = ftell(fp);
+                rewind(fp);
+
+                // read file contents
+                char *file_buf = malloc(fsize);
+                fread(file_buf, 1, fsize, fp);
+                fclose(fp);
+
+                // Good response template
+                char res_temp_file[] = 
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: application/octet-stream\r\n"
+                    "Content-Length: %d\r\n"
+                    "\r\n"
+                    "%s";
+                char res_file[2048];
+                snprintf(res_file, sizeof(res_file), res_temp_file, fsize, file_buf);
+                free(file_buf);
+            }
+        }
         
         // drop endpoints not from /echo/
         char req_endpt[20];
@@ -103,11 +141,18 @@ void handle_client(int client_fd) {
 }
 
 
-int main()
+int main(int argc, char *argv[])
 {
 	// Disable output buffering
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
+
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--directory") == 0) {
+            directory = argv[i + 1];  
+            break;
+        }
+    }
 
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	printf("Logs from your program will appear here!\n");
@@ -162,12 +207,12 @@ int main()
         pid_t pid = fork();
         // child process
         if (pid == 0) {
-            close(server_fd);
+            close(server_fd); // child doesn't need listener
             handle_client(client_fd);
             exit(0);
         } else if (pid > 0) {
             // parent process
-            close(client_fd);
+            close(client_fd); // parent doesn't need client fd
         } else {
             printf("fork failed: %s \n", strerror(errno));
             close(client_fd);
