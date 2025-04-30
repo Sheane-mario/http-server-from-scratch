@@ -170,16 +170,16 @@ void handle_client(int client_fd) {
                 snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
                 send(client_fd, res, strlen(res), 0);
             } else if (strcmp(pcmprs, "gzip") == 0) {
-                char res[4096];
+                char resp[4096];
                 char res_temp_enc_hdr[] = 
                     "HTTP/1.1 200 OK\r\n"
                     "Content-Type: text/plain\r\n"
                     "Content-Length: %d\r\n"
-                    "Content-Encoding: gzip"
+                    "Content-Encoding: gzip\r\n"
                     "\r\n"
                     "%s";
-                snprintf(res, sizeof(res), res_temp_enc_hdr, strlen(req_fl_buf), req_fl_buf);
-                send(client_fd, res, strlen(res), 0);
+                snprintf(resp, sizeof(resp), res_temp_enc_hdr, strlen(req_fl_buf), req_fl_buf);
+                send(client_fd, resp, strlen(resp), 0);
             }
         }
         close(client_fd);
