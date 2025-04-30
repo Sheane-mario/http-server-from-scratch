@@ -171,6 +171,14 @@ void handle_client(int client_fd) {
 //            printf("%s %ld\n", pcmprs, strlen(pcmprs));
             if (pcmprs != NULL) {
                 char *cmpr = strtok(pcmprs, ", ");
+                if (strcmp(cmpr, "gzip\r\n") == 0) {
+                    char res_enc[] = 
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "Content-Encoding: gzip\r\n"
+                        "\r\n";
+                    send(client_fd, res_enc, strlen(res_enc), 0);
+                }
                 int f = 0; // set to 1 when gzip is included otherwise set to 0
                 while (cmpr != NULL) {
                     if (strcmp(cmpr, "gzip") == 0) {
@@ -179,7 +187,7 @@ void handle_client(int client_fd) {
                     }
                     cmpr = strtok(NULL, ", ");
                 }
-                if (f == 1 || strcmp(cmpr, "gzip") == 0) {
+                if (f == 1) {
                     char res_enc_hdr[] = 
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Type: text/plain\r\n"
