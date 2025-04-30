@@ -179,7 +179,7 @@ void handle_client(int client_fd) {
                     }
                     cmpr = strtok(NULL, ", ");
                 }
-                if (f == 1) {
+                if (f == 1 || strcmp(cmpr, "gzip") == 0) {
                     char res_enc_hdr[] = 
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Type: text/plain\r\n"
