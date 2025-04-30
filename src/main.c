@@ -165,21 +165,20 @@ void handle_client(int client_fd) {
             // Prepare the response by inserting into the res template
             char *pcmprs = strstr(req_buf, "Accept-Encoding: ");
             pcmprs += 17;
-            if (strcmp(pcmprs, "invalid-encoding") == 0) {
+            printf("%s %ld\n", pcmprs, strlen(pcmprs));
+            if (strcmp(pcmprs, "invalid-encoding\r\n\r\n") == 0) {
                 char res[4096]; 
                 snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
                 send(client_fd, res, strlen(res), 0);
-            } else if (strcmp(pcmprs, "gzip") == 0) {
+            } else if (strcmp(pcmprs, "gzip\r\n\r\n") == 0) {
                 char resp[4096];
                 char res_temp_enc_hdr[] = 
                     "HTTP/1.1 200 OK\r\n"
                     "Content-Type: text/plain\r\n"
-                    "Content-Length: %d\r\n"
                     "Content-Encoding: gzip\r\n"
-                    "\r\n"
-                    "%s";
-                snprintf(resp, sizeof(resp), res_temp_enc_hdr, strlen(req_fl_buf), req_fl_buf);
-                send(client_fd, resp, strlen(resp), 0);
+                    "\r\n";
+                //snprintf(resp, sizeof(resp), res_temp_enc_hdr, strlen(req_fl_buf), req_fl_buf);
+                send(client_fd, res_temp_enc_hdr, strlen(res_temp_enc_hdr), 0);
             }
         }
         close(client_fd);
