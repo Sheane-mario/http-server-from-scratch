@@ -170,19 +170,29 @@ void handle_client(int client_fd) {
             printf("%s\n", req_fl_buf);
 //            printf("%s %ld\n", pcmprs, strlen(pcmprs));
             if (pcmprs != NULL) {
-                if (strcmp(pcmprs, "invalid-encoding\r\n\r\n") == 0) {
-                    char res[4096]; 
-                    snprintf(res, sizeof(res), res_temp, strlen(req_fl_buf), req_fl_buf);
-                    send(client_fd, res, strlen(res), 0);
-                } else if (strcmp(pcmprs, "gzip\r\n\r\n") == 0) {
-                    char resp[4096];
-                    char res_temp_enc_hdr[] = 
+                char *cmpr = strtok(pcmprs, ", ");
+                int f = 0; // set to 1 when gzip is included otherwise set to 0
+                while (cmpr != NULL) {
+                    if (strcmp(cmpr, "gzip") == 0) {
+                        f = 1;
+                        break;
+                    }
+                    cmpr = strtok(NULL, ", ");
+                }
+                if (f == 1) {
+                    char res_enc_hdr[] = 
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Type: text/plain\r\n"
                         "Content-Encoding: gzip\r\n"
                         "\r\n";
-                    //snprintf(resp, sizeof(resp), res_temp_enc_hdr, strlen(req_fl_buf), req_fl_buf);
-                    send(client_fd, res_temp_enc_hdr, strlen(res_temp_enc_hdr), 0);
+                    send(client_fd, res_enc_hdr, strlen(res_enc_hdr), 0);
+                } else {
+                    char res_enc_hdr[] = 
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "\r\n";
+                    send(client_fd, res_enc_hdr, strlen(res_enc_hdr), 0);
+
                 }
             }
             char res[4096];
