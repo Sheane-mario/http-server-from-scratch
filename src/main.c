@@ -95,6 +95,35 @@ void handle_client(int client_fd) {
             char file_path[4096];
             snprintf(file_path, sizeof(file_path), "%s/%s", directory, req_file);
 
+            // handling POST request
+            if (strcmp(method, "POST") == 0) {
+               char *body = strstr(req_buf, "\r\n\r\n");
+               if (body != NULL) {
+                    body += 4; // skip \r\n\r\n 
+               }
+               int bd_len = strlen(body);
+
+               // open a file for writing the request body
+               FILE *fp = fopen(file_path, "wb");
+               if (fp == NULL) {
+                    char res_svr_err[] = 
+                        "HTTP/1.1 500 Internal Server Error\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "Content-Length: 21\r\n"
+                        "\r\n"
+                        "Internal Server Error";
+                    send(client_fd, res_svr_err, strlen(res_svr_err), 0);
+               } else {
+                    fwrite(body, 1, bd_len, fp); 
+                    fclose(fp);
+                    // response for created 
+                    char res_crtd[] = 
+                        "HTTP/1.1 201 Created\r\n\r\n";
+                    send(client_fd, res_crtd, strlen(res_crtd), 0);
+               }
+            }
+
+            // handling GET request
             FILE *fp = fopen(file_path, "rb");
             if (fp == NULL) {
                 send(client_fd, res_b, strlen(res_b), 0);
