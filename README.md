@@ -7,6 +7,7 @@ Welcome to my custom-built HTTP server developed in pure C! This project was cre
 # 🚀 Features Implemented
 
 ✅ Request Parsing – Efficiently parses raw HTTP requests to extract the method, path, headers, and body.
+
 ✅ Endpoint Routing – Supports multiple endpoints with specific behavior:
 
 `/` – Returns a simple success response.
@@ -18,21 +19,27 @@ Welcome to my custom-built HTTP server developed in pure C! This project was cre
 `/files/<filename>` – Serves files from a user-defined directory (GET) and allows file creation via POST.
 
 ✅ Content-Encoding Detection – Detects if the client accepts gzip encoding and adjusts the response headers accordingly.
+
 ✅ Custom File Directory Support – Accepts a `--directory` command-line argument to serve and store files in a specified location.
+
 ✅ Basic Error Handling – Sends appropriate 404 Not Found or 500 Internal Server Error responses when needed.
+
 ✅ HTTP Response Templates – Dynamically builds responses with correct headers and content-lengths.
 
 # 🔧 Tech Stack
 
 Language: C
+
 Networking: POSIX sockets (TCP)
-Compilation: gcc
+
+Compilation: GCC
+
 OS: Built and tested on Linux
 
 # 🧪 Usage
 
 ```c
-gcc -o http_server server.c
+gcc -o http_server main.c
 ./http_server --directory ./files
 ```
 
